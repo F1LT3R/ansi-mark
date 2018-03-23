@@ -10,11 +10,12 @@
 ## Before and After
 
 ![Before ANSI-Mark](before.png)
+
 ![After ANSI-Mark](after.png)
 
 ## Explanation
 
-If you CLI app outputs strings containing ANSI color codes, like this:
+If your CLI app outputs strings containing ANSI color codes, like this:
 
 ```js
 const ansiStr = '\u001b[37m\u001b[33m<\u001b[36mbody\u001b[33m>\u001b[37m            \u001b[39m\n\u001b[37m\t\u001b[33m<\u001b[36mspan\u001b[33m>\u001b[37mGood\u001b[33m</\u001b[36mspan\u001b[33m>\u001b[37m\u001b[39m\n\u001b[37m\t\u001b[33m<\u001b[36mspan\u001b[33m>\u001b[37mBad\u001b[33m<\u001b[36mspan\u001b[33m>\u001b[37m  \u001b[39m\n\u001b[37m\u001b[33m<\u001b[36mbody\u001b[33m>\u001b[37m            \u001b[39m\n\u001b[37m\u001b[39m'
