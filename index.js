@@ -1,7 +1,9 @@
+const path = require('path')
 const ansiRegex = require('ansi-regex')
 const superSplit = require('super-split')
 const arrayUniq = require('array-uniq')
-const nthIndex = require('./nth-index')
+
+const nthIndex = require(path.join(__dirname, 'nth-index'))
 
 const hlx = (str, pos, opts) => {
 	const start = pos.start
