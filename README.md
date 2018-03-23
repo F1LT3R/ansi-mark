@@ -10,11 +10,14 @@
 ## Before and After
 
 ![Before ANSI-Mark](before.png)
+
+-
+
 ![After ANSI-Mark](after.png)
 
 ## Explanation
 
-If you CLI app outputs strings containing ANSI color codes, like this:
+If your CLI app outputs strings containing ANSI color codes, like this...
 
 ```js
 const ansiStr = '\u001b[37m\u001b[33m<\u001b[36mbody\u001b[33m>\u001b[37m            \u001b[39m\n\u001b[37m\t\u001b[33m<\u001b[36mspan\u001b[33m>\u001b[37mGood\u001b[33m</\u001b[36mspan\u001b[33m>\u001b[37m\u001b[39m\n\u001b[37m\t\u001b[33m<\u001b[36mspan\u001b[33m>\u001b[37mBad\u001b[33m<\u001b[36mspan\u001b[33m>\u001b[37m  \u001b[39m\n\u001b[37m\u001b[33m<\u001b[36mbody\u001b[33m>\u001b[37m            \u001b[39m\n\u001b[37m\u001b[39m'
@@ -23,7 +26,7 @@ console.log(ansiStr)
 
 ![Before ANSI-Mark](before.png)
 
-Your ANSI string contains visible, and invisible characters. This makes it difficult if you want to highlight a portion of your string. The start and end position of your highlight needs to account for the invisible characters.
+... then your ANSI string contains visible, and invisible characters. This makes it difficult if you want to highlight a portion of your string. The start and end position of your highlight needs to account for the invisible characters.
 
 But wouldn't it be simpler for everyone if there was a Node Module that let you highlight a sub-string using the offsets of the visible characters?
 
