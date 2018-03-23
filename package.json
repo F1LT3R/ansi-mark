@@ -1,7 +1,7 @@
 {
 	"name": "ansi-mark",
 	"main": "ansi-mark",
-	"version": "1.0.1",
+	"version": "1.0.2",
 	"description": "🖊️  a highlight marker for your color ansi strings",
 	"license": "MIT",
 	"repository": "F1LT3R/ansi-mark",

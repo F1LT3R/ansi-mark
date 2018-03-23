@@ -113,7 +113,7 @@ const isOutOfBounds = (text, opts) => {
 	if (endColumn < 0) {
 		return 'End.column marker out of bounds (min).'
 	}
-	if (endColumn > lines[endLine].length) {
+	if (endColumn > lines[endLine - 1].length) {
 		return 'End.column marker out of bounds (max).'
 	}
 
