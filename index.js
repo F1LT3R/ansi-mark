@@ -13,16 +13,6 @@ const realignOutOfBoundsCoords = (text, opts) => {
 		opts.end.line = totalLines
 	}
 
-	// 'End.line marker out of bounds (min).'
-	if (opts.end.line < 1) {
-		opts.end.line = 1
-	}
-
-	// 'Start.line marker out of bounds (max).'
-	if (opts.start.line > totalLines) {
-		opts.start.line = totalLines
-	}
-
 	// 'Start.line marker out of bounds (min).'
 	if (opts.start.line < 1) {
 		opts.start.line = 1
@@ -31,16 +21,6 @@ const realignOutOfBoundsCoords = (text, opts) => {
 	// 'Start.column marker out of bounds (min).'
 	if (opts.start.column < 1) {
 		opts.start.column = 1
-	}
-
-	// 'End.column marker out of bounds (min).'
-	if (opts.end.column < 1) {
-		opts.end.column = 1
-	}
-
-	// 'Start.column marker out of bounds (max).'
-	if (opts.start.column > lines[opts.start.line - 1].length) {
-		opts.start.column = lines[opts.start.line - 1].length
 	}
 
 	// 'End.column marker out of bounds (max).'
