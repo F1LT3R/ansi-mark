@@ -90,10 +90,3 @@ const result = ansiMark(ansiStr, opts)
 ```
 $ yarn add ansi-mark
 ```
-
-
-## Credits
-
-Thank you!
-
-- Kennebec for `nthIndex` [https://stackoverflow.com/a/14482123/2816869](https://stackoverflow.com/a/14482123/2816869)

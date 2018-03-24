@@ -1,162 +1,93 @@
-const path = require('path')
 const ansiRegex = require('ansi-regex')
 const superSplit = require('super-split')
 const arrayUniq = require('array-uniq')
+const stripAnsi = require('strip-ansi')
 
-const nthIndex = require(path.join(__dirname, 'nth-index'))
-
-const hlx = (str, pos, opts) => {
-	const start = pos.start
-	const end = pos.end
-	const inCol = opts.start.column
-	const outCol = opts.end.column
-	const len = end - start
-	const section = str.substr(start, len)
-
-	const ansies = arrayUniq(section.match(ansiRegex()))
-	const atomic = superSplit(section, ansies)
-
-	let a2x = []
-	atomic.forEach(atom => {
-		if (ansies.includes(atom) === false) {
-			a2x = a2x.concat(atom.split(''))
-			return
-		}
-		a2x.push(atom)
-	})
-
-	let output = ''
-	let x = 0
-	let y = -1
-	const height = opts.end.line - opts.start.line
-	let inPoint
-	let outPoint
-
-	const markNotBegun = () => {
-		return typeof inPoint !== 'number' &&
-			typeof outPoint !== 'number'
-	}
-
-	const markHasEnded = () => {
-		return typeof inPoint === 'number' &&
-			typeof outPoint === 'number'
-	}
-
-	const outsideOfMark = () => {
-		return markNotBegun() || markHasEnded()
-	}
-
-	a2x.forEach(subAtom => {
-		if (ansies.includes(subAtom) === false) {
-			if (subAtom === '\n') {
-				y += 1
-				x = 0
-			} else {
-				x += 1
-			}
-
-			if (x === inCol && y === 0) {
-				inPoint = output.length
-			}
-
-			output += subAtom
-
-			if (x === outCol - 1 && y === height) {
-				outPoint = output.length
-			}
-
-			return
-		}
-
-		if (outsideOfMark()) {
-			output += subAtom
-		} else if (!outsideOfMark() && !opts.resetColor) {
-			output += subAtom
-		}
-	})
-
-	const pre = output.substr(0, inPoint)
-	const mark = opts.color(output.substr(inPoint, outPoint - inPoint))
-	const post = output.substr(outPoint)
-
-	const marked = pre + mark + post
-	return marked
-}
-
-const isOutOfBounds = (text, opts) => {
-	const startLine = opts.start.line - 1
-	const endLine = opts.end.line
-	const startColumn = opts.start.column - 1
-	const endColumn = opts.end.column
-
-	const lines = text.split('\n')
+const realignOutOfBoundsCoords = (text, opts) => {
+	const plain = stripAnsi(text)
+	const lines = plain.split('\n')
 	const totalLines = lines.length
 
-	if (endLine > totalLines) {
-		return 'End.line marker out of bounds (max).'
+	// 'End.line marker out of bounds (max).'
+	if (opts.end.line > totalLines) {
+		opts.end.line = totalLines
 	}
-	if (endLine < 0) {
-		return 'End.line marker out of bounds (min).'
+
+	// 'End.line marker out of bounds (min).'
+	if (opts.end.line < 1) {
+		opts.end.line = 1
 	}
-	if (startLine > totalLines) {
-		return 'Start.line marker out of bounds (max).'
+
+	// 'Start.line marker out of bounds (max).'
+	if (opts.start.line > totalLines) {
+		opts.start.line = totalLines
 	}
-	if (startLine < 0) {
-		return 'Start.line marker out of bounds (min).'
+
+	// 'Start.line marker out of bounds (min).'
+	if (opts.start.line < 1) {
+		opts.start.line = 1
 	}
-	if (startColumn < 0) {
-		return 'Start.column marker out of bounds (min).'
+
+	// 'Start.column marker out of bounds (min).'
+	if (opts.start.column < 1) {
+		opts.start.column = 1
 	}
-	if (startColumn > lines[startLine].length) {
-		return 'Start.column marker out of bounds (max).'
+
+	// 'End.column marker out of bounds (min).'
+	if (opts.end.column < 1) {
+		opts.end.column = 1
 	}
-	if (endColumn < 0) {
-		return 'End.column marker out of bounds (min).'
+
+	// 'Start.column marker out of bounds (max).'
+	if (opts.start.column > lines[opts.start.line - 1].length) {
+		opts.start.column = lines[opts.start.line - 1].length
 	}
-	if (endColumn > lines[endLine - 1].length) {
-		return 'End.column marker out of bounds (max).'
+
+	// 'End.column marker out of bounds (max).'
+	if (opts.end.column > lines[opts.end.line - 1].length) {
+		opts.end.column = lines[opts.end.line - 1].length
+	}
+
+	if (opts.start.line > opts.end.line) {
+		throw new Error('Your start line is after your end line.')
+	}
+
+	if (opts.start.line === opts.end.line &&
+		opts.end.column < opts.start.column) {
+		throw new Error('Your end column is after your start column.')
 	}
 
 	return false
 }
 
-const markByLineColumn = (text, opts) => {
-	const outOfBounds = isOutOfBounds(text, opts)
-	if (outOfBounds) {
-		throw new Error(outOfBounds)
-	}
+// Returns arys:
+// 1 - ANSI Escape sequences from section
+// 2 - Glyphs in section (ansi escape seq - or - ascii character)
+const atomize = section => {
+	const ansies = arrayUniq(section.match(ansiRegex()))
+	const words = superSplit(section, ansies)
 
-	const startLine = opts.start.line - 1
-	const endLine = opts.end.line
-	const startPosLine = nthIndex(text, '\n', startLine)
-	const endPosLine = nthIndex(text, '\n', endLine)
-	const pos = {
-		start: startPosLine,
-		end: endPosLine
-	}
-
-	const marked = hlx(text, pos, opts)
-	const result = text.substr(0, startPosLine) + marked + text.substr(endPosLine)
-	return result
-}
-
-const markByOffset = (str, opts) => {
-	const ansies = arrayUniq(str.match(ansiRegex()))
-	const atomic = superSplit(str, ansies)
-
-	let a2x = []
-	atomic.forEach(atom => {
-		if (ansies.includes(atom) === false) {
-			a2x = a2x.concat(atom.split(''))
+	let glyphs = []
+	words.forEach(word => {
+		if (ansies.includes(word) === false) {
+			glyphs = glyphs.concat(word.split(''))
 			return
 		}
-		a2x.push(atom)
+		glyphs.push(word)
 	})
 
-	let output = ''
+	return {ansies, glyphs}
+}
+
+const markSection = (section, opts, linear) => {
+	const {ansies, glyphs} = atomize(section)
+
 	let x = 0
+	let y = 0
 	let inPoint
 	let outPoint
+	let output = ''
+	const height = opts.end.line - opts.start.line
 
 	const markNotBegun = () => {
 		return typeof inPoint !== 'number' &&
@@ -172,17 +103,22 @@ const markByOffset = (str, opts) => {
 		return markNotBegun() || markHasEnded()
 	}
 
-	a2x.forEach(subAtom => {
-		if (ansies.includes(subAtom) === false) {
+	glyphs.forEach(glyph => {
+		if (ansies.includes(glyph) === false) {
+			if (glyph === '\n' && !linear) {
+				y += 1
+				x = -1
+			}
+
 			x += 1
 
-			if (x === opts.start) {
+			if (x === opts.start.column && y === 0) {
 				inPoint = output.length
 			}
 
-			output += subAtom
+			output += glyph
 
-			if (x === opts.end - 1) {
+			if (x === opts.end.column && y === height) {
 				outPoint = output.length
 			}
 
@@ -190,18 +126,47 @@ const markByOffset = (str, opts) => {
 		}
 
 		if (outsideOfMark()) {
-			output += subAtom
+			output += glyph
 		} else if (!outsideOfMark() && !opts.resetColor) {
-			output += subAtom
+			output += glyph
 		}
 	})
 
 	const pre = output.substr(0, inPoint)
 	const mark = opts.color(output.substr(inPoint, outPoint - inPoint))
 	const post = output.substr(outPoint)
+	const sectionMarked = pre + mark + post
 
-	const marked = pre + mark + post
-	return marked
+	return sectionMarked
+}
+
+const mark2d = (text, opts) => {
+	realignOutOfBoundsCoords(text, opts)
+
+	const lines = text.split('\n')
+
+	// Minus 1: because line and column numbers start at 1
+	const startLine = opts.start.line - 1
+	const endLine = opts.end.line - 1
+
+	// Plus 1: because slice does not include the end indice
+	const unmarkedSection = lines.slice(startLine, endLine + 1).join('\n')
+
+	const preSection = lines.slice(0, startLine)
+	const markedSection = markSection(unmarkedSection, opts)
+	const postSection = lines.slice(endLine + 1)
+
+	const result = preSection.concat([markedSection]).concat(postSection).join('\n')
+	return result
+}
+
+const mark1d = (text, opts, linear) => {
+	const markedSection = markSection(text, opts, linear)
+	return markedSection
+}
+
+const mark = (text, opts, linear) => {
+	return linear ? mark1d(text, opts, linear) : mark2d(text, opts)
 }
 
 const validMarkersNumbers = opts => {
@@ -218,16 +183,19 @@ const validMarkersObject = opts => {
 		typeof opts.end.column === 'number'
 }
 
-const mark = (text, opts) => {
+const ansiMark = (text, opts) => {
 	if (validMarkersObject(opts)) {
-		return markByLineColumn(text, opts)
+		return mark(text, opts)
 	}
 
 	if (validMarkersNumbers(opts)) {
-		return markByOffset(text, opts)
+		opts.start = {line: 1, column: opts.start}
+		opts.end = {line: 1, column: opts.end}
+		const linear = true
+		return mark(text, opts, linear)
 	}
 
 	throw new Error('Invalid marker definition.')
 }
 
-module.exports = mark
+module.exports = ansiMark
